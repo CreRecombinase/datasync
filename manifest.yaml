@@ -1,0 +1,13 @@
+rcloneconfig: myaws
+pull:
+  foo:
+    source: '/mybucket/input'
+    destination: '/tmp/foo'
+sync:
+  bar:
+    source: '/mybucket/projectspace'
+    destination: '/home/bar'
+push:
+  baz:
+    source: '/home/bar/outputs'
+    destination: '/mybucket/outputs'

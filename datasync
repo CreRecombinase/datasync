@@ -1,0 +1,87 @@
+#!/usr/local/bin/python
+
+import sys
+import subprocess
+import yaml
+
+
+def load_config():
+    with open('manifest.yaml', 'r') as f:
+        return yaml.safe_load(f)
+
+
+def run_rclone(rclone_command):
+    subprocess.run(rclone_command, shell=True, check=True)
+
+
+def pull_entry(entry):
+    source = entry['source']
+    destination = entry['destination']
+    rclone_config = config['rcloneconfig']
+    rclone_command = f'rclone copy {rclone_config}:{source} {destination}'
+    run_rclone(rclone_command)
+
+
+def sync_entry(entry):
+    source = entry['source']
+    destination = entry['destination']
+    rclone_config = config['rcloneconfig']
+    rclone_command = f'rclone copy {source} {rclone_config}:{destination}'
+    run_rclone(rclone_command)
+    rclone_command = f'rclone copy {rclone_config}:{destination} {source}'
+    run_rclone(rclone_command)
+
+
+def push_entry(entry):
+    source = entry['source']
+    destination = entry['destination']
+    rclone_config = config['rcloneconfig']
+    rclone_command = f'rclone copy {rclone_config}:{source} {destination}'
+    run_rclone(rclone_command)
+
+
+def run_command(command, entry=None):
+    if command == 'pull':
+        if entry:
+            if entry in config[command]:
+                pull_entry(config[command][entry])
+            else:
+                print(f'Entry "{entry}" not found in config for {command}')
+        else:
+            for entry_name, entry_details in config[command].items():
+                pull_entry(entry_details)
+
+    elif command == 'sync':
+        if entry:
+            if entry in config[command]:
+                sync_entry(config[command][entry])
+            else:
+                print(f'Entry "{entry}" not found in config for {command}')
+        else:
+            for entry_name, entry_details in config[command].items():
+                sync_entry(entry_details)
+
+    elif command == 'push':
+        if entry:
+            if entry in config[command]:
+                push_entry(config[command][entry])
+            else:
+                print(f'Entry "{entry}" not found in config for {command}')
+        else:
+            for entry_name, entry_details in config[command].items():
+                push_entry(entry_details)
+
+    else:
+        print(f'Invalid command: {command}. Available commands are: pull, sync, push')
+
+
+if __name__ == '__main__':
+    config = load_config()
+    args = sys.argv[1:]
+    if len(args) > 2:
+        print('Invalid number of arguments.')
+        print('Usage: ./datasync <command> [entry]')
+    else:
+        command = args[0] if args else None
+        entry = args[1] if len(args) == 2 else None
+        run_command(command, entry)
